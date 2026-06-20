@@ -30,7 +30,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 
 #[allow(unused)]
 mod lfs_config {
-    include!(concat!(env!("OUT_DIR"), "/littlefs_config.rs"));
+    include!(concat!(env!("OUT_DIR"), "/filesystem.rs"));
 }
 
 // ── RAM-backed Storage impl ─────────────────────────────────────────────

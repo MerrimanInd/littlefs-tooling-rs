@@ -175,8 +175,61 @@ jobs:
             export CC_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-gcc
             export AR_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-ar
             cd examples/esp32-littlefs-server
-            SSID=RustyCrab PASSOWRD=rustycrab cargo build --target xtensa-esp32s3-none-elf --release
+            SSID=RustyCrab PASSWORD=rustycrab cargo build --target xtensa-esp32s3-none-elf --release
           '
+
+  # ---------------------------------------------------------------------
+  # Windows: native build sanity check, no Nix involved. Nix doesn't run
+  # on native Windows. Scoped to the host crates only; the embedded
+  # examples cross-compile to thumbv8m/xtensa regardless of host OS, so
+  # building them here adds no Windows-specific signal.
+  #
+  # windows-latest's bundled VS Clang is flaky for bindgen depending on
+  # which image rotation you land on
+  # (https://github.com/actions/runner-images/issues/12435), so LLVM is
+  # installed explicitly here rather than relying on whatever's on the
+  # image that week.
+  #
+  # Not yet added to ci-success's required checks below — leave it
+  # informational until it's proven stable, same as build-esp32 started.
+  # ---------------------------------------------------------------------
+  build-windows:
+    name: Build (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install LLVM/Clang (for littlefs2-sys's bindgen build)
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "18.1"
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-windows-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-windows-${{ runner.os }}-
+
+      - name: cargo build
+        env:
+          LIBCLANG_PATH: ${{ env.LLVM_PATH }}\bin
+        run: cargo build --package littlefs2-pack --package littlefs2-tool --verbose
+
+      - name: cargo test
+        env:
+          LIBCLANG_PATH: ${{ env.LLVM_PATH }}\bin
+        # cross_compat.rs tests skip gracefully without mklittlefs on
+        # PATH — not provisioning it here since this job is meant to be
+        # a lightweight build/unit-test sanity check, not full parity
+        # with the Linux cross-compat suite.
+        run: cargo test --package littlefs2-pack --package littlefs2-tool --verbose
 
   # ---------------------------------------------------------------------
   # Single required status check for branch protection, so you don't
@@ -191,6 +244,7 @@ jobs:
       - semver-checks
       - build-rp2350
       - build-esp32
+      # - build-windows
     runs-on: ubuntu-latest
     steps:
       - name: Check required jobs

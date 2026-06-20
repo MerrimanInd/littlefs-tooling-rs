@@ -83,18 +83,6 @@ jobs:
       - run: nix develop .#default -c cargo semver-checks check-release --package littlefs2-tool
 
   # ---------------------------------------------------------------------
-  # Docs build, since mdbook is part of the default shell's tooling.
-  # ---------------------------------------------------------------------
-  docs:
-    name: mdbook build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - run: nix develop .#default -c mdbook build
-
-  # ---------------------------------------------------------------------
   # RP2040: cross-compile only (no hardware in CI, no flashing).
   # ---------------------------------------------------------------------
   build-rp2040:

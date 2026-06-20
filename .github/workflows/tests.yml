@@ -80,7 +80,7 @@ jobs:
           fetch-depth: 0 # semver-checks needs history to diff against
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      - run: nix develop .#default -c cargo semver-checks check-release --package littlefs2-tool
+      - run: nix develop .#default -c cargo semver-checks check-release --package littlefs2-pack
 
   # ---------------------------------------------------------------------
   # RP2350: cross-compile only (no hardware in CI, no flashing).

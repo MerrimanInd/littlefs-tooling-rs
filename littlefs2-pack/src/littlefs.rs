@@ -238,11 +238,18 @@ impl LfsImage {
     /// The caller must ensure `self` is not moved or dropped while the config
     /// is in use.
     ///
-    /// This struct hardcodes specific values from name_max on, most notably the
-    /// on `disk_version` param. This is because the `littlefs2` crate that reads
-    /// the image also hardcodes these values (including staying on the disk version
-    /// 2.0). Unfortunately this will just require hardcoded values in both crates
-    /// and this will be checked when upgrading to newer versions of `littlefs2`.
+    /// This struct hardcodes specific values from `name_max` on, most
+    /// notably `disk_version`. These must match whatever on-disk format
+    /// version `littlefs2-sys`'s vendored littlefs core (and thus the
+    /// `littlefs2` crate used by the actual firmware that reads these
+    /// images) is compiled against — currently v2.1 (`0x00020001`).
+    /// `disk_version` only takes effect because `littlefs2-sys` is built
+    /// with its `multiversion` feature enabled; without it this field is
+    /// silently ignored and the crate's compiled-in default is used
+    /// regardless. If `littlefs2-sys` is ever bumped to a version with a
+    /// different default on-disk format, this value (and `name_max` /
+    /// `file_max` / `attr_max` below, which mklittlefs also hardcodes at
+    /// build time) needs to be re-checked against it.
     unsafe fn build_lfs_config(&mut self) -> lfs::lfs_config {
         lfs::lfs_config {
             context: self as *mut LfsImage as *mut c_void,
@@ -777,7 +784,7 @@ impl<'a> MountedFs<'a> {
                         continue;
                     }
 
-                    let is_dir = info.type_ as u32 == lfs::lfs_type_LFS_TYPE_DIR;
+                    let is_dir = info.type_ == lfs::lfs_type_LFS_TYPE_DIR as u8;
 
                     entries.push(DirEntry {
                         name,
@@ -834,7 +841,7 @@ impl<'a> MountedFs<'a> {
             .unwrap_or("<invalid utf8>")
             .to_string();
 
-            let is_dir = info.type_ as u32 == lfs::lfs_type_LFS_TYPE_DIR;
+            let is_dir = info.type_ == lfs::lfs_type_LFS_TYPE_DIR as u8;
 
             Ok(DirEntry {
                 name,

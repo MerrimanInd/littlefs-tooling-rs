@@ -175,7 +175,7 @@ jobs:
             export CC_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-gcc
             export AR_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-ar
             cd examples/esp32-littlefs-server
-            cargo build --target xtensa-esp32s3-none-elf --release
+            SSID=RustyCrab PASSOWRD=rustycrab cargo build --target xtensa-esp32s3-none-elf --release
           '
 
   # ---------------------------------------------------------------------

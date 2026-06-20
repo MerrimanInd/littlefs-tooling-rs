@@ -266,7 +266,7 @@ impl LfsImage {
             metadata_max: 0,
             inline_max: 0,
             compact_thresh: 0,
-            disk_version: 0x00020000,
+            disk_version: 0x00020001,
         }
     }
 

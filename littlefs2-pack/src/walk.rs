@@ -110,6 +110,17 @@ fn to_lfs_path(host_path: &Path, root: &Path) -> Result<String, WalkError> {
         .to_str()
         .ok_or_else(|| WalkError::InvalidPath(host_path.to_owned()))?;
 
+    // littlefs's on-disk format always uses `/`, regardless of host OS.
+    // `Path::to_str()` renders using the host's native separator, which
+    // is `\` on Windows -- normalize it here, at the one point a Path
+    // gets turned into an LFS path string, rather than relying on every
+    // caller to remember to do it.
+    let s = if std::path::MAIN_SEPARATOR != '/' {
+        s.replace(std::path::MAIN_SEPARATOR, "/")
+    } else {
+        s.to_string()
+    };
+
     Ok(format!("/{s}"))
 }
 

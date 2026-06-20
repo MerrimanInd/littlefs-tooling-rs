@@ -104,12 +104,12 @@ fn validate_for_lfs(config: &ImageConfig) -> Result<(), LfsError> {
             "read_size and write_size must be > 0".into(),
         ));
     }
-    if config.block_size % config.read_size != 0 {
+    if !config.block_size.is_multiple_of(config.read_size) {
         return Err(LfsError::InvalidConfig(
             "block_size must be a multiple of read_size".into(),
         ));
     }
-    if config.block_size % config.write_size != 0 {
+    if !config.block_size.is_multiple_of(config.write_size) {
         return Err(LfsError::InvalidConfig(
             "block_size must be a multiple of write_size".into(),
         ));
@@ -765,7 +765,7 @@ impl<'a> MountedFs<'a> {
                         .iter()
                         .position(|&c| c == 0)
                         .unwrap_or(name_bytes.len());
-                    let name = std::str::from_utf8(&std::slice::from_raw_parts(
+                    let name = std::str::from_utf8(std::slice::from_raw_parts(
                         name_bytes.as_ptr() as *const u8,
                         name_len,
                     ))

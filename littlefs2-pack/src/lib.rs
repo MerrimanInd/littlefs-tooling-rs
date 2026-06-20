@@ -123,7 +123,7 @@ pub fn pack_and_generate_config(littlefs_config: &Path) {
     image.pack_from_config(config.directory).unwrap();
 
     // Generate the Rust config module
-    std::fs::write(&rust_file_path, &image.emit_rust().unwrap()).unwrap();
+    std::fs::write(&rust_file_path, image.emit_rust().unwrap()).unwrap();
 
     // Generate the image binary
     let binary = image.into_data();

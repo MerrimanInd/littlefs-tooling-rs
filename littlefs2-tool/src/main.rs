@@ -49,7 +49,7 @@ pub struct ImageConfigParams {
     pub block_size: Option<usize>,
 
     /// Total number of blocks in the filesystem.
-    #[arg(short = 'c', long, conflicts_with = "image_size")]
+    #[arg(long, conflicts_with = "image_size")]
     pub block_count: Option<usize>,
 
     /// Total image size in bytes (alternative to --block-count).
@@ -522,10 +522,18 @@ fn cmd_info(config_path: &Option<PathBuf>, args: InfoCmd) -> Result<()> {
 ///
 /// Hashes are stored under `target/.flash-cache/` so they are cleaned
 /// by `cargo clean` and already covered by `.gitignore`.
+///
+/// The cache key incorporates the full file path (hashed), not just the
+/// base name, so that two different files that happen to share a name
+/// (e.g. `firmware.bin` in two different projects, or the same temp file
+/// name reused across test runs) don't collide with each other's cache
+/// entries.
 fn cache_path(file: &Path) -> PathBuf {
+    let path_hash = format!("{:x}", Sha256::digest(file.to_string_lossy().as_bytes()));
     Path::new("target/.flash-cache").join(format!(
-        "{}.sha256",
-        file.file_name().unwrap().to_string_lossy()
+        "{}-{}.sha256",
+        file.file_name().unwrap().to_string_lossy(),
+        &path_hash[..16]
     ))
 }
 

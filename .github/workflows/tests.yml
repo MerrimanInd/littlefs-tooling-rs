@@ -83,10 +83,10 @@ jobs:
       - run: nix develop .#default -c cargo semver-checks check-release --package littlefs2-tool
 
   # ---------------------------------------------------------------------
-  # RP2040: cross-compile only (no hardware in CI, no flashing).
+  # RP2350: cross-compile only (no hardware in CI, no flashing).
   # ---------------------------------------------------------------------
-  build-rp2040:
-    name: Build RP2040 example
+  build-rp2350:
+    name: Build RP2350 example
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
         run: |
           nix develop .#rp -c bash -c '
             set -euxo pipefail
-            cargo build --package <rp-example-crate> \
+            cargo build --package rp2350-list-lfs-files \
               --target thumbv8m.main-none-eabihf --release
           '
 
@@ -155,14 +155,25 @@ jobs:
           restore-keys: |
             cargo-esp-${{ runner.os }}-
 
-      - name: cargo build --target xtensa-esp32s3-none-elf
+      - name: cargo build esp32-list-lfs-files --target xtensa-esp32s3-none-elf
         run: |
           nix develop .#esp -c bash -c '
             set -euxo pipefail
             source "$HOME/export-esp.sh"
             export CC_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-gcc
             export AR_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-ar
-            cargo build --package <esp-example-crate> \
+            cargo build --package esp32-list-lfs-files \
+              --target xtensa-esp32s3-none-elf --release
+          '
+
+      - name: cargo build esp32-littlefs-server --target xtensa-esp32s3-none-elf
+        run: |
+          nix develop .#esp -c bash -c '
+            set -euxo pipefail
+            source "$HOME/export-esp.sh"
+            export CC_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-gcc
+            export AR_xtensa_esp32s3_none_elf=xtensa-esp32s3-elf-ar
+            cargo build --package esp32-littlefs-server \
               --target xtensa-esp32s3-none-elf --release
           '
 
@@ -177,7 +188,7 @@ jobs:
       - flake-check
       - test-default
       - semver-checks
-      - build-rp2040
+      - build-rp2350
       - build-esp32
     runs-on: ubuntu-latest
     steps:
@@ -186,7 +197,7 @@ jobs:
           if [ "${{ needs.flake-check.result }}" != "success" ] || \
              [ "${{ needs.test-default.result }}" != "success" ] || \
              [ "${{ needs.semver-checks.result }}" != "success" ] || \
-             [ "${{ needs.build-rp2040.result }}" != "success" ]; then
+             [ "${{ needs.build-rp2350.result }}" != "success" ]; then
             echo "A required job failed."
             exit 1
           fi

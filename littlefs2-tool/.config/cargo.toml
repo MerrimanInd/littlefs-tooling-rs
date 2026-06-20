@@ -1,0 +1,21 @@
+# There's a known bug in `littlefs2-sys` where its vendored `string.c`
+# is compiled and linked unconditionally for every target, including
+# hosted ones. On the MSVC target this collides with UCRT's own
+# strspn/strcspn symbols at link time (LNK2005), since MSVC's static
+# linker treats duplicate definitions as a hard error -- unlike Unix
+# dynamic linking against glibc, which never surfaces this.
+#
+# /FORCE:MULTIPLE tells link.exe to tolerate the duplicate definitions
+# rather than fail. It's a workaround, not a fix: which of the two
+# (functionally equivalent) implementations actually gets called is
+# decided by link order, not anything we control here.
+#
+# Scoped to x86_64-pc-windows-msvc only -- /FORCE:MULTIPLE is an
+# MSVC link.exe flag and isn't understood by GNU-target linkers
+# (x86_64-pc-windows-gnu, or any non-Windows target).
+#
+# Remove once this lands upstream:
+#   https://github.com/trussed-dev/littlefs2-sys/pull/15
+#   https://github.com/trussed-dev/littlefs2/issues/41
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/FORCE:MULTIPLE"]

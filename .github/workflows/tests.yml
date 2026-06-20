@@ -220,7 +220,6 @@ jobs:
       - name: cargo build
         env:
           LIBCLANG_PATH: ${{ env.LLVM_PATH }}\bin
-          RUSTFLAGS: -C link-arg=/FORCE:MULTIPLE
         run: cargo build --package littlefs2-pack --package littlefs2-tool --verbose
 
       - name: cargo test

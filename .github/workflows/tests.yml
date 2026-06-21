@@ -244,7 +244,7 @@ jobs:
       - semver-checks
       - build-rp2350
       - build-esp32
-      # - build-windows
+      - build-windows
     runs-on: ubuntu-latest
     steps:
       - name: Check required jobs
@@ -252,6 +252,8 @@ jobs:
           if [ "${{ needs.flake-check.result }}" != "success" ] || \
              [ "${{ needs.test-default.result }}" != "success" ] || \
              [ "${{ needs.semver-checks.result }}" != "success" ] || \
+             [ "${{ needs.build-esp32.result }}" != "success" ] || \
+             [ "${{ needs.build-windows.result }}" != "success" ] || \
              [ "${{ needs.build-rp2350.result }}" != "success" ]; then
             echo "A required job failed."
             exit 1

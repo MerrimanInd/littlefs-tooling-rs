@@ -4,7 +4,7 @@ This project provides a toolbox for deploying [LittleFS filesystems](https://git
 
 These tools build off of the Rust LittleFS bindings built by the Trussed Dev team. Their main [`littlefs2`](https://github.com/trussed-dev/littlefs2) is used by the firmware projects themselves to access LittleFS images. These tools use [`littlefs2-sys`](https://github.com/trussed-dev/littlefs2-sys), the low-level C bindings, for the actual packing and unpacking so that every parameter of the image can be adjusted at runtime not compile time.
 
-`littlefs2-pack` is tested for compatibility with the C++ [`mklittlefs` project](https://github.com/earlephilhower/mklittlefs). This is ensured with the `cross-compat.rs` test that packs with one tool then unpack with the other, in both directions. These tests are ran against the version of `mklittlefs` in the submodule and requires that tool to be built prior to running the tests.
+`littlefs2-pack` is tested for compatibility with the C++ [`mklittlefs` project](https://github.com/earlephilhower/mklittlefs). This is ensured with the `cross-compat.rs` test that packs with one tool then unpack with the other, in both directions. These tests are ran against the version of `mklittlefs` in the nixpkgs repository.
 
 # Examples
 

@@ -104,12 +104,12 @@ fn validate_for_lfs(config: &ImageConfig) -> Result<(), LfsError> {
             "read_size and write_size must be > 0".into(),
         ));
     }
-    if config.block_size % config.read_size != 0 {
+    if !config.block_size.is_multiple_of(config.read_size) {
         return Err(LfsError::InvalidConfig(
             "block_size must be a multiple of read_size".into(),
         ));
     }
-    if config.block_size % config.write_size != 0 {
+    if !config.block_size.is_multiple_of(config.write_size) {
         return Err(LfsError::InvalidConfig(
             "block_size must be a multiple of write_size".into(),
         ));
@@ -238,11 +238,18 @@ impl LfsImage {
     /// The caller must ensure `self` is not moved or dropped while the config
     /// is in use.
     ///
-    /// This struct hardcodes specific values from name_max on, most notably the
-    /// on `disk_version` param. This is because the `littlefs2` crate that reads
-    /// the image also hardcodes these values (including staying on the disk version
-    /// 2.0). Unfortunately this will just require hardcoded values in both crates
-    /// and this will be checked when upgrading to newer versions of `littlefs2`.
+    /// This struct hardcodes specific values from `name_max` on, most
+    /// notably `disk_version`. These must match whatever on-disk format
+    /// version `littlefs2-sys`'s vendored littlefs core (and thus the
+    /// `littlefs2` crate used by the actual firmware that reads these
+    /// images) is compiled against — currently v2.1 (`0x00020001`).
+    /// `disk_version` only takes effect because `littlefs2-sys` is built
+    /// with its `multiversion` feature enabled; without it this field is
+    /// silently ignored and the crate's compiled-in default is used
+    /// regardless. If `littlefs2-sys` is ever bumped to a version with a
+    /// different default on-disk format, this value (and `name_max` /
+    /// `file_max` / `attr_max` below, which mklittlefs also hardcodes at
+    /// build time) needs to be re-checked against it.
     unsafe fn build_lfs_config(&mut self) -> lfs::lfs_config {
         lfs::lfs_config {
             context: self as *mut LfsImage as *mut c_void,
@@ -266,7 +273,7 @@ impl LfsImage {
             metadata_max: 0,
             inline_max: 0,
             compact_thresh: 0,
-            disk_version: 0x00020000,
+            disk_version: 0x00020001,
         }
     }
 
@@ -765,7 +772,7 @@ impl<'a> MountedFs<'a> {
                         .iter()
                         .position(|&c| c == 0)
                         .unwrap_or(name_bytes.len());
-                    let name = std::str::from_utf8(&std::slice::from_raw_parts(
+                    let name = std::str::from_utf8(std::slice::from_raw_parts(
                         name_bytes.as_ptr() as *const u8,
                         name_len,
                     ))
@@ -777,7 +784,7 @@ impl<'a> MountedFs<'a> {
                         continue;
                     }
 
-                    let is_dir = info.type_ as u32 == lfs::lfs_type_LFS_TYPE_DIR;
+                    let is_dir = info.type_ == lfs::lfs_type_LFS_TYPE_DIR as u8;
 
                     entries.push(DirEntry {
                         name,
@@ -834,7 +841,7 @@ impl<'a> MountedFs<'a> {
             .unwrap_or("<invalid utf8>")
             .to_string();
 
-            let is_dir = info.type_ as u32 == lfs::lfs_type_LFS_TYPE_DIR;
+            let is_dir = info.type_ == lfs::lfs_type_LFS_TYPE_DIR as u8;
 
             Ok(DirEntry {
                 name,

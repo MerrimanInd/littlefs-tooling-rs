@@ -31,7 +31,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-pub const DEFAULT_IMAGE_NAME: &'static str = "filesystem";
+pub const DEFAULT_IMAGE_NAME: &str = "filesystem";
 
 /// Errors that can occur when loading or validating a configuration file.
 #[derive(Debug, Error)]
@@ -250,9 +250,9 @@ impl RawImageConfig {
         // read_size and write_size, and must evenly divide block_size.
         let cache_size = self.cache_size.unwrap_or_else(|| read_size.max(write_size));
 
-        if cache_size % read_size != 0
-            || cache_size % write_size != 0
-            || self.block_size % cache_size != 0
+        if !cache_size.is_multiple_of(read_size)
+            || !cache_size.is_multiple_of(write_size)
+            || !self.block_size.is_multiple_of(cache_size)
         {
             return Err(ConfigError::InvalidCacheSize {
                 cache_size,
@@ -266,12 +266,12 @@ impl RawImageConfig {
         // smallest valid value that covers all blocks (rounded up to 8 bytes).
         // Minimum 8 bytes per LittleFS requirements.
         let lookahead_size = self.lookahead_size.unwrap_or_else(|| {
-            let bytes_needed = (block_count + 7) / 8;
-            let aligned = ((bytes_needed + 7) / 8) * 8;
+            let bytes_needed = block_count.div_ceil(8);
+            let aligned = bytes_needed.div_ceil(8) * 8;
             aligned.max(8)
         });
 
-        if lookahead_size % 8 != 0 || lookahead_size == 0 {
+        if !lookahead_size.is_multiple_of(8) || lookahead_size == 0 {
             return Err(ConfigError::InvalidLookaheadSize(lookahead_size));
         }
 
@@ -359,6 +359,12 @@ impl RawImageConfig {
     pub fn with_lookahead_size(mut self, lookahead_size: usize) -> Self {
         self.lookahead_size = Some(lookahead_size);
         self
+    }
+}
+
+impl Default for RawImageConfig {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

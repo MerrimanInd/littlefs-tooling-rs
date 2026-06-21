@@ -110,6 +110,17 @@ fn to_lfs_path(host_path: &Path, root: &Path) -> Result<String, WalkError> {
         .to_str()
         .ok_or_else(|| WalkError::InvalidPath(host_path.to_owned()))?;
 
+    // littlefs's on-disk format always uses `/`, regardless of host OS.
+    // `Path::to_str()` renders using the host's native separator, which
+    // is `\` on Windows -- normalize it here, at the one point a Path
+    // gets turned into an LFS path string, rather than relying on every
+    // caller to remember to do it.
+    let s = if std::path::MAIN_SEPARATOR != '/' {
+        s.replace(std::path::MAIN_SEPARATOR, "/")
+    } else {
+        s.to_string()
+    };
+
     Ok(format!("/{s}"))
 }
 
@@ -205,13 +216,13 @@ pub(crate) fn walk_directory(config: &DirectoryConfig) -> Result<PathSet, WalkEr
                 // Ensure parent directories of rescued files are created.
                 // The parent might have been skipped by the main walk
                 // (e.g. a hidden directory containing a rescued file).
-                if let Some(parent) = entry.path().parent() {
-                    if parent != root.as_path() {
-                        let parent_lfs = to_lfs_path(parent, root)?;
-                        if !seen.contains(&parent_lfs) {
-                            seen.files.push(parent_lfs.clone());
-                            to_pack.dirs.push(parent_lfs);
-                        }
+                if let Some(parent) = entry.path().parent()
+                    && parent != root.as_path()
+                {
+                    let parent_lfs = to_lfs_path(parent, root)?;
+                    if !seen.contains(&parent_lfs) {
+                        seen.files.push(parent_lfs.clone());
+                        to_pack.dirs.push(parent_lfs);
                     }
                 }
                 seen.files.push(lfs_path.clone());
@@ -328,7 +339,7 @@ mod tests {
         walk.build()
             .filter_map(|e| e.ok())
             .filter(|e| e.depth() > 0)
-            .filter(|e| e.file_type().map_or(false, |ft| ft.is_file()))
+            .filter(|e| e.file_type().is_some_and(|ft| ft.is_file()))
             .map(|e| e.path().file_name().unwrap().to_string_lossy().to_string())
             .collect()
     }

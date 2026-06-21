@@ -25,6 +25,7 @@
 
         cDeps = with pkgs; [
           clang
+          # clang_22
           cmake
           gnumake
           gcc
@@ -41,6 +42,7 @@
 
         cLibs = with pkgs; [
           libclang.lib
+          # llvmPackages_22.libclang.lib
         ];
 
         bindgenEnv = {
@@ -58,6 +60,11 @@
         cEnv = bindgenEnv // {
           AR = "ar";
           CC = "gcc";
+          # Picked up by both `devShells.default` and `packages.default`'s
+          # checkPhase (`cargo test`). Referencing pkgs.mklittlefs here is
+          # what makes Nix build/fetch it as part of either closure — no
+          # need to also list it in buildInputs/checkInputs separately.
+          MKLITTLEFS_CPP = "${pkgs.mklittlefs}/bin/mklittlefs";
         };
       in
       with pkgs;
@@ -68,6 +75,7 @@
             name = "lfs2-tool";
             buildInputs = [
               rust-bin.stable.latest.default
+              pkgs.mklittlefs # puts `mklittlefs` on PATH too, for cross_compat.sh
             ]
             ++ cDeps
             ++ cLibs
@@ -75,7 +83,6 @@
             ++ buildDeps;
 
             LD_LIBRARY_PATH = "${lib.makeLibraryPath (cDeps ++ cLibs)}";
-            MKLITTLEFS_CPP = "./mklittlefs/mklittlefs";
           }
         );
 

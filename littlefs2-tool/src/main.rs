@@ -209,7 +209,7 @@ fn image_config_for_reading(
             }
         };
 
-    if data.is_empty() || data.len() % block_size != 0 {
+    if data.is_empty() || !data.len().is_multiple_of(block_size) {
         bail!(
             "image file size ({}) is not a multiple of block_size ({block_size})",
             data.len()

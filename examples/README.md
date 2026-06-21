@@ -17,7 +17,7 @@ If you don't have `nix` or are on Windows you'll have to follow the installation
 This simple example builds a directory, adds it directly to the firmware image with the `include_bytes!()` macro, and then reads the contents out to the terminal.
 
 ### `esp32-littlefs-server`
-This is the most full-featured example, using all of the LittleFS tools in the repo. It builds a local website containing a simple website into a LittleFS image using `builds.rs`. It flashes both firmware and filesystem with the `littlefs flash` utility. Then firmware image then loads it from the partition and serves it on a WiFi network.
+This is the most full-featured example, using all of the LittleFS tools in the repo. It's based on the excellent [impl Rust ESP32 tutorial book](https://esp32.implrust.com/wifi/web-server/index.html). It builds a local website containing a simple website into a LittleFS image using `builds.rs`. It flashes both firmware and filesystem with the `littlefs flash` utility. Then firmware image then loads it from the partition and serves it on a WiFi network.
 
 Note that you'll have to set your device to a static IP address on the same subnet as 192.168.13.37 as the example doesn't have a DHCP server. Then access the website at that IP address. Also this example needs an SSID and PASSWORD environment variable set at compile time. They can be provided with the Cargo command:
 
